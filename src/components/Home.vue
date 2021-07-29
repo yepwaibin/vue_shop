@@ -1,18 +1,27 @@
 <template>
   <el-container class="home-container">
+    <!-- 页头 -->
     <el-header>
       <div>
-        <img src="../assets/dota.jpg" alt="" />
-        <span>私人博客</span>
+        <img src="../assets/logo.png" alt="" />
+        <span>后台管理系统</span>
       </div>
       <el-button type="info" @click="logout">退出</el-button>
     </el-header>
     <!-- 页面主体区域 -->
     <el-container>
       <!-- 侧边栏 -->
+
+      <!-- 动态绑定宽度 -->
       <el-aside :width="isCollapse ? '64px' : '200px'">
         <div class="toggle-button" @click="toggleCollapse">|||</div>
         <!-- 侧边栏菜单区域 -->
+
+        <!-- :unique-opened="true"->只允许展开一个菜单 -->
+        <!-- :collapse-transition="false" -> 关闭动画 -->
+        <!-- router -> 导航开启路由模式 (启用该模式会在激活导航时以 index 作为 path 进行路由跳转)-->
+        <!-- collapse 是否水平折叠收起菜单 -->
+        <!-- background-color、text-color和active-text-color，分别用于设置菜单的背景色、菜单的文字颜色和当前激活菜单的文字颜色 -->
         <el-menu
           background-color="#545c64"
           text-color="#fff"
@@ -37,6 +46,7 @@
               <span>{{ item.authName }}</span>
             </template>
             <!-- 二级菜单 -->
+            <!-- 以 index 作为 path 进行路由跳转 -->
             <el-menu-item
               :index="'/' + subItem.path"
               v-for="subItem in item.children"
@@ -81,6 +91,7 @@ export default {
     }
   },
   created () {
+    // 生命周期里获取所有的菜单
     this.getMenuList()
     this.activePath = window.sessionStorage.getItem('activePath')
   },
@@ -136,23 +147,31 @@ img {
 
 .el-aside {
   background-color: #333744;
+  // 选中侧边栏会突出一点，把他取消
   .el-menu {
     border-right: none;
   }
-  margin-right: 10px;
 }
 
 .el-main {
   background-color: #eaedf1;
 }
 
+// 图标和文字给点间距
+.iconfont {
+  margin-right: 10px;
+}
+
 .toggle-button {
   background-color: #4a5064;
   font-size: 10px;
+  // 行高
   line-height: 24px;
   color: #fff;
   text-align: center;
+  // 线之间给点距离
   letter-spacing: 0.2em;
+  // 小手
   cursor: pointer;
 }
 </style>

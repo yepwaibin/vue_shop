@@ -11,7 +11,10 @@
     <el-card>
       <!-- 搜索与添加区域 -->
       <el-row :gutter="20">
-        <el-col :span="18">
+        <el-col :span="8">
+          <!-- 双向绑定查询参数 queryInfo.query 绑定点击事件,触发getUserList 获取用户列表-->
+          <!-- clearable清空输入框 -->
+          <!-- 点击清空事件,触发clear 重新调用getUserList 获取用户列表 -->
           <el-input
             placeholder="请输入内容"
             v-model="queryInfo.query"
@@ -32,24 +35,33 @@
         </el-col>
       </el-row>
 
+      <!-- 表格 -->
       <el-table :data="userlist" border stripe>
+        <!-- 索引列 -->
+        <el-table-column type="index" label="#"></el-table-column>
         <el-table-column label="姓名" prop="username"></el-table-column>
         <el-table-column label="邮箱" prop="email"></el-table-column>
         <el-table-column label="电话" prop="mobile"></el-table-column>
         <el-table-column label="角色" prop="role_name"></el-table-column>
         <el-table-column label="状态">
-          <!-- 作用域插槽 -->
+          <!-- 开关组件 作用域插槽 -->
           <template slot-scope="scope">
+            <!-- 开关组件 -->
             <el-switch
               v-model="scope.row.mg_state"
               @change="userStateChanged(scope.row)"
             ></el-switch>
           </template>
         </el-table-column>
+
         <el-table-column label="操作" width="180px">
+          <!-- scope作用域插槽 -->
           <template slot-scope="scope">
             <!-- 修改按钮 -->
+            <!-- 使用content属性来决定hover时的提示信息。由placement属性决定展示效果 -->
+            <!-- enterable 鼠标是否可进入到 tooltip 中 -->
             <el-tooltip content="修改" placement="top" :enterable="false">
+              <!-- size 决定按钮尺寸 -->
               <el-button
                 type="primary"
                 icon="el-icon-share"
@@ -72,6 +84,7 @@
                 type="warning"
                 icon="el-icon-setting"
                 size="mini"
+                @click="setRole(scope.row)"
               ></el-button>
             </el-tooltip>
           </template>
@@ -79,10 +92,12 @@
       </el-table>
 
       <!-- 分页区域 -->
+      <!-- 使用了size-change和current-change事件来处理页码大小和当前页变动时候触发的事件
+      。page-sizes接受一个整型数组，数组元素为展示的选择每页显示个数的选项 -->
       <el-pagination
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-        :current-page="currentPage4"
+        :current-page="queryInfo.pagenum"
         :page-sizes="[2, 10, 20, 50]"
         :page-size="100"
         layout="total, sizes, prev, pager, next, jumper"
@@ -92,6 +107,7 @@
     </el-card>
 
     <!-- 添加用户的对话框 -->
+    <!-- addDialogVisible 是否显示对话框 -->
     <el-dialog
       title="添加用户"
       :visible.sync="addDialogVisible"
@@ -155,14 +171,34 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 分配角色的对话框 -->
+    <el-dialog
+      title="分配角色"
+      :visible.sync="setRoleDialogVisible"
+      width="50%"
+    >
+      <div>
+        <p>当前的用户：{{ userInfo.username }}</p>
+        <p>当前的角色：{{ userInfo.role_name }}</p>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="setRoleDialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="setRoleDialogVisible = false"
+            >确 定</el-button
+          >
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 export default {
   data () {
-    // 验证邮箱的规则
-    var checkEmail = (rule, value, callback) => {
+    // 定义验证邮箱的规则
+    const checkEmail = (rule, value, callback) => {
       // 验证邮箱的正则表达式
       const regEmail = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(\.[a-zA-Z0-9_-])+/
 
@@ -174,7 +210,7 @@ export default {
     }
 
     // 验证手机号的规则
-    var checkMobile = (rule, value, callback) => {
+    const checkMobile = (rule, value, callback) => {
       const regMobile = /^(0|86|17591)?(13[0-9]|15[0123456789]|17[678]|18[0-9]|14[57])[0-9]{8}$/
 
       if (regMobile.test(value)) {
@@ -260,7 +296,13 @@ export default {
             trigger: 'blur'
           }
         ]
-      }
+      },
+      // 控制分配角色对话框的显示与隐藏
+      setRoleDialogVisible: false,
+      // 需要被分配角色的用户信息
+      userInfo: {},
+      // 所有角色的数据列表
+      rolesList: []
     }
   },
   created () {
@@ -282,28 +324,30 @@ export default {
     handleSizeChange (newSize) {
       // console.log(newSize)
       this.queryInfo.pagesize = newSize
+      // 页码改变重新获取用户列表
       this.getUserList()
     },
     // 监听页码值改变的事件
     handleCurrentChange (newPage) {
       // console.log(newPage)
       this.queryInfo.pagenum = newPage
+      // 页码改变重新获取用户列表
       this.getUserList()
     },
     // 监听 switch 开关状态的改变
-    async userStateChanged (userinfo) {
-      console.log(userinfo)
+    async userStateChanged (userInfo) {
       const { data: res } = await this.$http.put(
-        `user/${userinfo.id}/state/${userinfo.mg_state}`
+        `users/${userInfo.id}/state/${userInfo.mg_state}`
       )
       if (res.meta.status !== 200) {
-        userinfo.mg_state = !userinfo.mg_state
+        userInfo.mg_state = !userInfo.mg_state
         return this.$message.error('更新用户状态失败')
       }
-      this.$message.success('更新用户状态成功')
+      this.$message.success('更新用户状态成功！')
     },
     // 监听添加用户对话框的关闭事件
     addDialogClosed () {
+      // 清空输入框内容
       this.$refs.addFormRef.resetFields()
     },
     // 点击按钮，添加用户
@@ -366,6 +410,7 @@ export default {
     },
     // 根据id删除对应的用户信息
     async removeUserById (id) {
+      console.log(id)
       // 弹框询问用户是否删除数据
       const confirmResult = await this.$confirm(
         '此操作将永久删除该用户, 是否继续?',
@@ -393,6 +438,17 @@ export default {
       this.$message.success('删除用户成功')
       // 刷新
       this.getUserList()
+    },
+    async setRole (userInfo) {
+      this.userInfo = userInfo
+
+      const { data: res } = await this.$http.get('role')
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取角色列表失败')
+      }
+
+      this.rolesList = res.data
+      this.setRoleDialogVisible = true
     }
   }
 }

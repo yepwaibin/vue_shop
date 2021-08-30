@@ -69,7 +69,7 @@ export default {
     // 登录验证
     login () {
       this.$refs.loginFormRef.validate(async valid => {
-        if (!valid) return
+        if (!valid) return false
         const { data: res } = await this.$http.post('login', this.loginForm)
         if (res.meta.status !== 200) return this.$message.error('登录失败！')
         this.$message.success('登录成功')
@@ -97,10 +97,10 @@ export default {
   background-color: #fff;
   // 四周圆角
   border-radius: 3px;
+  // 水平垂直居中
   position: absolute;
   left: 50%;
   top: 50%;
-  // 向左边和上边移动自身长度的一半
   transform: translate(-50%, -50%);
 }
 

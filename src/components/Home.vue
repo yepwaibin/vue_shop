@@ -22,6 +22,7 @@
         <!-- router -> 导航开启路由模式 (启用该模式会在激活导航时以 index 作为 path 进行路由跳转)-->
         <!-- collapse 是否水平折叠收起菜单 -->
         <!-- background-color、text-color和active-text-color，分别用于设置菜单的背景色、菜单的文字颜色和当前激活菜单的文字颜色 -->
+        <!-- default-active当前激活菜单的 index -->
         <el-menu
           background-color="#545c64"
           text-color="#fff"
